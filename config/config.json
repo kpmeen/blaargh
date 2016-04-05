@@ -12,12 +12,12 @@
   ],
   "owner": {
     "name": "John Doe",
-    "avatar": "",
+    "avatar": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Piratey,_vector_version.svg/592px-Piratey,_vector_version.svg.png",
     "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed a lorem quis neque interdum consequat ut sed sem. Duis quis tempor nunc. Interdum et malesuada fames ac ante ipsum primis in faucibus.",
-    "email": "",
+    "email": "john@mailinator.com",
     "disqusShortname": "",
     "twitter": "scala_js",
-    "googleAnalytics": "",
-    "github": ""
+    "googleAnalytics": "UA-35636560-2",
+    "github": "kpmeen"
   }
 }
