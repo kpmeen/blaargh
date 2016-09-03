@@ -1,4 +1,4 @@
-@
+
 import ammonite.ops._
 
 val baseFolder = cwd / up
