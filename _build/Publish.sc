@@ -1,9 +1,9 @@
-load.module(ammonite.ops.cwd/"transformers.scala")
-load.module(ammonite.ops.cwd/"frontmatter.scala")
-load.module(ammonite.ops.cwd/"common.scala")
-@
+import $file.Common, Common._
+import $file.Transformers, Transformers._
+import $file.Frontmatter, Frontmatter._
 import ammonite.ops._
 
+@main
 def main(postTitle: String = "") = {
   if (postTitle.isEmpty) {
     BlaarghWriter.generate()
@@ -11,7 +11,7 @@ def main(postTitle: String = "") = {
     val fm = FrontMatter(
       title = postTitle,
       author = "",
-      date = Some(new java.util.Date()),
+      date = Some(java.time.LocalDate.now),
       ingress = None,
       labels = None,
       image = None,

@@ -1,8 +1,7 @@
-load.ivy("org.pegdown" % "pegdown" % "1.6.0")
-load.ivy("org.yaml" % "snakeyaml" % "1.17")
-load.module(ammonite.ops.cwd/"frontmatter.scala")
-load.module(ammonite.ops.cwd/"common.scala")
-@
+import $file.Common, Common._
+import $file.Frontmatter, Frontmatter._
+import $ivy.`org.pegdown:pegdown:1.6.0`
+import $ivy.`org.yaml:snakeyaml:1.17`
 import ammonite.ops._
 import org.pegdown.ast.{HeaderNode, SimpleNode, TableNode, TextNode, VerbatimNode}
 import org.pegdown.{Extensions, LinkRenderer, PegDownProcessor, ToHtmlSerializer}
@@ -172,7 +171,7 @@ object BlaarghWriter {
 
     val sb = SitemapBuilder.build(
       entries.map {
-        case (name, fm, _, _) => (dateFormat.format(fm.date.get), name.replaceAll(" ", "_"))
+        case (name, fm, _, _) => (fm.date.get.toString, name.replaceAll(" ", "_"))
       }
     )
 
