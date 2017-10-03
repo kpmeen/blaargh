@@ -19,6 +19,7 @@ case class FrontMatter(
       val builder = Map.newBuilder[String, Any]
       builder += "title" -> title
       builder += "author" -> author
+      builder += "image" -> image.getOrElse("")
       date.foreach(d => builder += "date" -> d.toString)
       builder += "ingress" -> ingress.map(_.replaceAll("\n", " ")).getOrElse("")
       builder += "labels" -> labels.getOrElse(Seq.empty).asJava
