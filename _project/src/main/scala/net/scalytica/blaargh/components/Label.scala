@@ -1,11 +1,11 @@
 /**
- * Copyright(c) 2016 Knut Petter Meen, all rights reserved.
+ * Copyright(c) 2019 Knut Petter Meen, all rights reserved.
  */
 package net.scalytica.blaargh.components
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import net.scalytica.blaargh.pages.Views.{Filter, FilterCriteria, View}
 import net.scalytica.blaargh.styles.BlaarghBootstrapCSS
 
@@ -15,13 +15,15 @@ object Label {
 
   case class Props(lbl: String, ctl: RouterCtl[View])
 
-  val component = ReactComponentB[Props]("Label")
-    .initialState_P(p => p)
+  val component = ScalaComponent
+    .builder[Props]("Label")
+    .initialStateFromProps(p => p)
     .render { $ =>
       <.span(
         BlaarghBootstrapCSS.labelDefault,
         ^.cursor.pointer,
-        ^.onClick --> $.state.ctl.byPath.set(Filter(FilterCriteria("label", $.props.lbl)).asPath),
+        ^.onClick --> $.state.ctl.byPath
+          .set(Filter(FilterCriteria("label", $.props.lbl)).asPath),
         $.props.lbl
       )
     }

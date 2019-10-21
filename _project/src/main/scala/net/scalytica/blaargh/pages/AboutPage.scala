@@ -1,10 +1,10 @@
 /**
- * Copyright(c) 2016 Knut Petter Meen, all rights reserved.
+ * Copyright(c) 2019 Knut Petter Meen, all rights reserved.
  */
 package net.scalytica.blaargh.pages
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import net.scalytica.blaargh.models.Config
 import net.scalytica.blaargh.styles.BlaarghBootstrapCSS
 import net.scalytica.blaargh.utils.StringUtils
@@ -12,10 +12,13 @@ import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
 object AboutPage {
+
+  val CssSettings = scalacss.devOrProdDefaults
+
+  import CssSettings._
 
   case class Props(siteConf: Future[Config])
 
@@ -54,69 +57,98 @@ object AboutPage {
     )
   }
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
     def init: Callback = {
-      $.props.map(p =>
-        Callback.future[Unit] {
-          for {
-            config <- p.siteConf
-            page <- loadPage
-          } yield {
-            $.modState(_.copy(conf = config, content = page))
-          }
-        }.runNow()
+      $.props.map(
+        p =>
+          Callback
+            .future[Unit] {
+              for {
+                config <- p.siteConf
+                page   <- loadPage
+              } yield {
+                $.modState(_.copy(conf = config, content = page))
+              }
+            }
+            .runNow()
       )
     }
 
     def loadPage: Future[Option[String]] =
-      Ajax.get(url = "pages/about.html").map(xhr =>
-        xhr.status match {
-          case ok: Int if ok == 200 => Some(xhr.responseText)
-          case _ => None
-        }
-      )
+      Ajax
+        .get(url = "pages/about.html")
+        .map(
+          xhr =>
+            xhr.status match {
+              case ok: Int if ok == 200 => Some(xhr.responseText)
+              case _                    => None
+          }
+        )
 
     def render(props: Props, state: State) = {
-      <.div(BlaarghBootstrapCSS.container,
-        <.div(BlaarghBootstrapCSS.row,
-          <.div(BlaarghBootstrapCSS.col(8),
-            <.div(BlaarghBootstrapCSS.container,
-              ^.dangerouslySetInnerHtml(state.content.map(c => c).getOrElse(""))
+      <.div(
+        BlaarghBootstrapCSS.container,
+        <.div(
+          BlaarghBootstrapCSS.row,
+          <.div(
+            BlaarghBootstrapCSS.col(8),
+            <.div(
+              BlaarghBootstrapCSS.container,
+              ^.dangerouslySetInnerHtml := state.content
+                .map(c => c)
+                .getOrElse("")
             )
           ),
-          <.div(BlaarghBootstrapCSS.col(4),
-            <.div(Styles.profileCard,
+          <.div(
+            BlaarghBootstrapCSS.col(4),
+            <.div(
+              Styles.profileCard,
               <.img(
                 Styles.centeredAvatar,
-                ^.src := StringUtils.asOption(state.conf.owner.avatar).getOrElse("assets/images/default_avatar.png")
+                ^.src := StringUtils
+                  .asOption(state.conf.owner.avatar)
+                  .getOrElse("assets/images/default_avatar.png")
               ),
-              <.div(BlaarghBootstrapCSS.cardBlock,
+              <.div(
+                BlaarghBootstrapCSS.cardBlock,
                 <.h4(BlaarghBootstrapCSS.cardTitle, state.conf.owner.name),
                 <.p(BlaarghBootstrapCSS.cardText, state.conf.owner.bio),
-                <.p(BlaarghBootstrapCSS.cardText,
-                  StringUtils.asOption(state.conf.owner.email).map(email =>
-                    <.a(
-                      Styles.authorSocial,
-                      ^.href := s"mailto:$email",
-                      <.i(^.className := "fa fa-envelope")
+                <.p(
+                  BlaarghBootstrapCSS.cardText,
+                  StringUtils
+                    .asOption(state.conf.owner.email)
+                    .map(
+                      email =>
+                        <.a(
+                          Styles.authorSocial,
+                          ^.href := s"mailto:$email",
+                          <.i(^.className := "fa fa-envelope")
+                      )
                     )
-                  ).getOrElse(EmptyTag),
-                  StringUtils.asOption(state.conf.owner.twitter).map(twitter =>
-                    <.a(
-                      Styles.authorSocial,
-                      ^.href := s"http://twitter.com/$twitter",
-                      ^.target := "_blank",
-                      <.i(^.className := "fa fa-twitter")
+                    .getOrElse(EmptyVdom),
+                  StringUtils
+                    .asOption(state.conf.owner.twitter)
+                    .map(
+                      twitter =>
+                        <.a(
+                          Styles.authorSocial,
+                          ^.href := s"http://twitter.com/$twitter",
+                          ^.target := "_blank",
+                          <.i(^.className := "fa fa-twitter")
+                      )
                     )
-                  ).getOrElse(EmptyTag),
-                  StringUtils.asOption(state.conf.owner.github).map(github =>
-                    <.a(
-                      Styles.authorSocial,
-                      ^.href := s"http://github.com/${state.conf.owner.github}",
-                      ^.target := "_blank",
-                      <.i(^.className := "fa fa-github")
-                    )
-                  ).getOrElse(EmptyTag)
+                    .getOrElse(EmptyVdom),
+                  StringUtils
+                    .asOption(state.conf.owner.github)
+                    .map { github =>
+                      <.a(
+                        Styles.authorSocial,
+                        ^.href := s"http://github.com/$github",
+                        ^.target := "_blank",
+                        <.i(^.className := "fa fa-github")
+                      )
+                    }
+                    .getOrElse(EmptyVdom)
                 )
               )
             )
@@ -126,8 +158,9 @@ object AboutPage {
     }
   }
 
-  val component = ReactComponentB[Props]("About")
-    .initialState_P(p => State(Config.empty, None))
+  val component = ScalaComponent
+    .builder[Props]("About")
+    .initialStateFromProps(_ => State(Config.empty, None))
     .renderBackend[Backend]
     .componentWillMount(_.backend.init)
     .build

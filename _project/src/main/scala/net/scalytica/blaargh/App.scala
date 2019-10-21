@@ -5,7 +5,7 @@ package net.scalytica.blaargh
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import net.scalytica.blaargh.components._
 import net.scalytica.blaargh.models.{Article, Config}
 import net.scalytica.blaargh.pages.Views._
@@ -16,11 +16,10 @@ import net.scalytica.blaargh.utils.RuntimeConfig
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js._
-import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scalacss.ScalaCssReact._
 
-
-object App extends JSApp {
+object App {
 
   val SiteConfig = Config.load()
 
@@ -29,14 +28,20 @@ object App extends JSApp {
 
     dynamicRouteCT((string("[^\\/]*") / string("(.*)$")).caseClass[ArticleRef]) ~>
       dynRenderR { (ref, ctl) =>
-        ArticleView(Article.Articles.map(_.find(_.filename == ref.filename)), ref, ctl)
+        ArticleView(
+          Article.Articles.map(_.find(_.filename == ref.filename)),
+          ref,
+          ctl
+        )
       }
   }
 
   val filterRule = RouterConfigDsl[FilterCriteria].buildRule { dsl =>
     import dsl._
 
-    dynamicRouteCT((string("[^\\/]*") / string("(.*)$")).caseClass[FilterCriteria]) ~>
+    dynamicRouteCT(
+      (string("[^\\/]*") / string("(.*)$")).caseClass[FilterCriteria]
+    ) ~>
       dynRenderR { (lbl, ctl) =>
         SearchResultsPage(lbl, ctl.contramap[View](v => lbl))
       }
@@ -49,41 +54,56 @@ object App extends JSApp {
       | staticRoute(Home.basePath, Home) ~> renderR(ctl => HomePage(ctl))
       | staticRoute(About.basePath, About) ~> render(AboutPage(SiteConfig))
       | staticRoute(NotFound.basePath, NotFound) ~> render(NotFoundPage())
-      | filterRule.prefixPath_/(Filter.basePath).pmap[View](Filter.apply) { case Filter(criteria) => criteria }
-      | postsRule.prefixPath_/(Posts.basePath).pmap[View](Posts.apply) { case Posts(ref) => ref }
-      )
-      .notFound(nfp => redirectToPage(NotFound)(Redirect.Replace))
+      | filterRule.prefixPath_/(Filter.basePath).pmap[View](Filter.apply) {
+        case Filter(criteria) => criteria
+      }
+      | postsRule.prefixPath_/(Posts.basePath).pmap[View](Posts.apply) {
+        case Posts(ref) => ref
+      })
+      .notFound(_ => redirectToPage(NotFound)(Redirect.Replace))
       .renderWith((ctl, r) => layout(ctl, r))
   }
 
   val router = Router(RuntimeConfig.baseUrl, routerConfig) //.logToConsole)
 
-  def layout(ctl: RouterCtl[View], r: Resolution[View]) = BlaarghLayout(SiteConfig, ctl, r)
+  def layout(ctl: RouterCtl[View], r: Resolution[View]) =
+    BlaarghLayout(SiteConfig, ctl, r)
+
+  @JSExportTopLevel("App")
+  protected def getInstance(): this.type = this
 
   @JSExport
-  override def main(): Unit = {
+  def main(): Unit = {
     CSSRegistry.load()
-    router().render(org.scalajs.dom.document.getElementsByClassName("blaargh")(0))
+    router().renderIntoDOM(
+      org.scalajs.dom.document.getElementsByClassName("blaargh")(0)
+    )
   }
 
   object BlaarghLayout {
 
-    case class Props(futureConf: Future[Config], ctl: RouterCtl[View], r: Resolution[View])
+    case class Props(
+        futureConf: Future[Config],
+        ctl: RouterCtl[View],
+        r: Resolution[View]
+    )
 
     case class State(conf: Config)
 
-    class Backend($: BackendScope[Props, State]) {
+    class Backend($ : BackendScope[Props, State]) {
       val ga = Dynamic.global.ga
 
       def init: Callback = {
         $.props.map { p =>
-          Callback.future[Unit] {
-            p.futureConf.map { c =>
-              ga("create", c.owner.googleAnalytics, "auto")
-              ga("send", "pageview")
-              $.modState(_.copy(conf = c))
+          Callback
+            .future[Unit] {
+              p.futureConf.map { c =>
+                ga("create", c.owner.googleAnalytics, "auto")
+                ga("send", "pageview")
+                $.modState(_.copy(conf = c))
+              }
             }
-          }.runNow()
+            .runNow()
         }
       }
 
@@ -96,30 +116,33 @@ object App extends JSApp {
       def render(props: Props, state: State) = {
         <.div(BlaarghBootstrapCSS.box)(
           Navbar(state.conf, props.r.page, props.ctl),
-          <.header(BlaarghBootstrapCSS.blaarghHeader,
-            <.div(BlaarghBootstrapCSS.blaarghHeaderSVGContainer,
-              <.div(BlaarghBootstrapCSS.blaarghSVGHeaderText,
+          <.header(
+            BlaarghBootstrapCSS.blaarghHeader,
+            <.div(
+              BlaarghBootstrapCSS.blaarghHeaderSVGContainer,
+              <.div(
+                BlaarghBootstrapCSS.blaarghSVGHeaderText,
                 HeaderSVG(state.conf)
               )
             )
           ),
-          <.section(BlaarghBootstrapCSS.blaarghContent,
-            <.div(BlaarghBootstrapCSS.container,
-              props.r.render()
-            )
+          <.section(
+            BlaarghBootstrapCSS.blaarghContent,
+            <.div(BlaarghBootstrapCSS.container, props.r.render())
           ),
-          <.footer(BlaarghBootstrapCSS.blaarghFooter,
-            Footer(state.conf)
-          )
+          <.footer(BlaarghBootstrapCSS.blaarghFooter, Footer(state.conf))
         )
       }
     }
 
-    val component = ReactComponentB[Props]("BlaarghLayout")
-      .initialState_P(p => State(Config.empty))
+    val component = ScalaComponent
+      .builder[Props]("BlaarghLayout")
+      .initialStateFromProps(p => State(Config.empty))
       .renderBackend[Backend]
       .componentWillMount(_.backend.init)
-      .componentWillReceiveProps(ctx => ctx.$.backend.feedAnalytics(ctx.nextProps))
+      .componentWillReceiveProps { ctx =>
+        ctx.backend.feedAnalytics(ctx.nextProps)
+      }
       .build
 
     def apply(conf: Future[Config], ctl: RouterCtl[View], r: Resolution[View]) =

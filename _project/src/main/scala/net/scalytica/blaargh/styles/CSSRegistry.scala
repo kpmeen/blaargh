@@ -1,18 +1,19 @@
 /**
- * Copyright(c) 2016 Knut Petter Meen, all rights reserved.
+ * Copyright(c) 2019 Knut Petter Meen, all rights reserved.
  */
 package net.scalytica.blaargh.styles
 
 import net.scalytica.blaargh.components._
 import net.scalytica.blaargh.pages.AboutPage
-
-import scalacss.ScalaCssReact._
-import scalacss.mutable.GlobalRegistry
-import scalacss.Defaults._
+import scalacss.internal.mutable.GlobalRegistry
 
 object CSSRegistry {
 
-  def load() = {
+  val CssSettings = scalacss.devOrProdDefaults
+
+  import CssSettings._
+
+  def load(): Unit = {
     GlobalRegistry.register(
       BaseCSS,
       BlaarghBootstrapCSS,

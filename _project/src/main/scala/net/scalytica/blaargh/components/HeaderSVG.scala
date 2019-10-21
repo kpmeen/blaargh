@@ -1,17 +1,20 @@
 /**
- * Copyright(c) 2016 Knut Petter Meen, all rights reserved.
+ * Copyright(c) 2019 Knut Petter Meen, all rights reserved.
  */
 package net.scalytica.blaargh.components
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.svg.prefix_<^._
+import japgolly.scalajs.react.vdom.svg_<^._
 import net.scalytica.blaargh.models.Config
 
-import scala.scalajs.niocharset.StandardCharsets
-import scalacss.Defaults._
+import java.nio.charset.StandardCharsets
 import scalacss.ScalaCssReact._
 
 object HeaderSVG {
+
+  val CssSettings = scalacss.devOrProdDefaults
+
+  import CssSettings._
 
   object Styles extends StyleSheet.Inline {
 
@@ -44,19 +47,48 @@ object HeaderSVG {
     )
   }
 
-  val component = ReactComponentB[Config]("HeaderSVG")
+  val component = ScalaComponent
+    .builder[Config]("HeaderSVG")
     .render { $ =>
       // Calculate binary values for site owner's initials
-      val subTitle = $.props.owner.name.filter(_.isUpper).getBytes(StandardCharsets.UTF_8).map(b => Integer.toBinaryString(b: Int))
-      <.svg(Styles.svg,
+      val subTitle = $.props.owner.name
+        .filter(_.isUpper)
+        .getBytes(StandardCharsets.UTF_8)
+        .map(b => Integer.toBinaryString(b: Int))
+      <.svg(
+        Styles.svg,
         <.defs(
-          <.maskTag(^.id := "mask", ^.x := "0", ^.y := "0", ^.width := "100%", ^.height := "100%",
-            <.rect(^.id := "alpha", ^.x := "0", ^.y := "0", ^.width := "100%", ^.height := "100%"),
-            <.text(^.id := "title", ^.x := "50%", ^.y := "0", ^.dy := "1.58em")($.props.siteTitle),
-            <.text(^.id := "subtitle", ^.x := "50%", ^.y := "0", ^.dy := "9.8em")(subTitle.mkString(" ")) //"01001011 01010000 01001101")//(s"by ${state.conf.owner.name}")
+          <.maskTag(
+            ^.id := "mask",
+            ^.x := "0",
+            ^.y := "0",
+            ^.width := "100%",
+            ^.height := "100%",
+            <.rect(
+              ^.id := "alpha",
+              ^.x := "0",
+              ^.y := "0",
+              ^.width := "100%",
+              ^.height := "100%"
+            ),
+            <.text(^.id := "title", ^.x := "50%", ^.y := "0", ^.dy := "1.58em")(
+              $.props.siteTitle
+            ),
+            <.text(
+              ^.id := "subtitle",
+              ^.x := "50%",
+              ^.y := "0",
+              ^.dy := "9.8em"
+            )(subTitle.mkString(" ")) //"01001011 01010000 01001101")//(s"by ${state.conf.owner.name}")
           )
         ),
-        <.rect(^.id := "base", ^.x := "0", ^.y := "0", ^.width := "100%", ^.height := "100%")
+        <.rect(
+          ^.id := "base",
+          ^.x := "0",
+          ^.y := "0",
+          ^.width := "100%",
+          ^.height := "100%"
+        )
       )
     }
     .build

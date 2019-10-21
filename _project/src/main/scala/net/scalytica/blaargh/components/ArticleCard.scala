@@ -1,20 +1,23 @@
 /**
- * Copyright(c) 2016 Knut Petter Meen, all rights reserved.
+ * Copyright(c) 2019 Knut Petter Meen, all rights reserved.
  */
 package net.scalytica.blaargh.components
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import net.scalytica.blaargh.models.Article
 import net.scalytica.blaargh.pages.Views.{Filter, FilterCriteria, Posts, View}
 import net.scalytica.blaargh.styles.BlaarghBootstrapCSS
 import net.scalytica.blaargh.utils.StringUtils._
 
-import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
 object ArticleCard {
+
+  val CssSettings = scalacss.devOrProdDefaults
+
+  import CssSettings._
 
   case class Props(article: Article, ctl: RouterCtl[View])
 
@@ -50,48 +53,68 @@ object ArticleCard {
 
   }
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def maybeTitle(props: Props)(content: TagMod => TagMod): TagMod =
-      asOption(props.article.title).map(title =>
-        content(
-          <.a(Styles.cardTitle,
-            <.h4(^.onClick --> openArticleCB(props), title)
+      asOption(props.article.title)
+        .map(
+          title =>
+            content(
+              <.a(
+                Styles.cardTitle,
+                <.h4(^.onClick --> openArticleCB(props), title)
+              )
           )
         )
-      ).getOrElse(EmptyTag)
+        .getOrElse(EmptyVdom)
 
     def maybeImage(props: Props) =
-      asOption(props.article.image).map(image =>
-        <.img(Styles.cardImage, ^.src := image, ^.onClick --> openArticleCB(props))
+      asOption(props.article.image).map(
+        image =>
+          <.img(
+            Styles.cardImage,
+            ^.src := image,
+            ^.onClick --> openArticleCB(props)
+        )
       )
 
-    def openArticleCB(props: Props): Callback = props.ctl.byPath.set(Posts(props.article.articleRef).asPath)
-
+    def openArticleCB(props: Props): Callback =
+      props.ctl.byPath.set(Posts(props.article.articleRef).asPath)
 
     def render(props: Props) = {
-      <.div(Styles.articleCard,
-        maybeImage(props).getOrElse(EmptyTag),
-        maybeTitle(props)(title =>
-          <.div(BlaarghBootstrapCSS.cardBlock,
-            title,
-            <.p(BlaarghBootstrapCSS.cardText,
-              props.article.ingress
-            ),
-            <.p(BlaarghBootstrapCSS.cardText,
-              <.small(BlaarghBootstrapCSS.textMuted,
-                <.span("by "),
-                <.a(
-                  BlaarghBootstrapCSS.author,
-                  ^.onClick --> props.ctl.byPath.set(Filter(FilterCriteria("author", props.article.author)).asPath),
-                  props.article.author
-                ),
-                <.span(s" on "),
-                <.a(BlaarghBootstrapCSS.date, s"${props.article.asJsDate.toDateString()}")
-              )
-            ),
-            if (props.article.labels.nonEmpty) <.span(props.article.labels.map(l => Label(l, props.ctl)))
-            else EmptyTag
+      <.div(
+        Styles.articleCard,
+        maybeImage(props).getOrElse(EmptyVdom),
+        maybeTitle(props)(
+          title =>
+            <.div(
+              BlaarghBootstrapCSS.cardBlock,
+              title,
+              <.p(BlaarghBootstrapCSS.cardText, props.article.ingress),
+              <.p(
+                BlaarghBootstrapCSS.cardText,
+                <.small(
+                  BlaarghBootstrapCSS.textMuted,
+                  <.span("by "),
+                  <.a(
+                    BlaarghBootstrapCSS.author,
+                    ^.onClick --> props.ctl.byPath.set(
+                      Filter(FilterCriteria("author", props.article.author)).asPath
+                    ),
+                    props.article.author
+                  ),
+                  <.span(s" on "),
+                  <.a(
+                    BlaarghBootstrapCSS.date,
+                    s"${props.article.asJsDate.toDateString()}"
+                  )
+                )
+              ),
+              if (props.article.labels.nonEmpty)
+                <.span(
+                  props.article.labels.map(l => Label(l, props.ctl)).toTagMod
+                )
+              else EmptyVdom
           )
         )
       )
@@ -99,11 +122,13 @@ object ArticleCard {
 
   }
 
-  val component = ReactComponentB[Props]("ArticleCard")
+  val component = ScalaComponent
+    .builder[Props]("ArticleCard")
     .stateless
     .renderBackend[Backend]
     .build
 
-  def apply(article: Article, ctl: RouterCtl[View]) = component(Props(article, ctl))
+  def apply(article: Article, ctl: RouterCtl[View]) =
+    component(Props(article, ctl))
 
 }
