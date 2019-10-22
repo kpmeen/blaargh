@@ -59,31 +59,29 @@ object AboutPage {
 
   class Backend($ : BackendScope[Props, State]) {
     def init: Callback = {
-      $.props.map(
-        p =>
-          Callback
-            .future[Unit] {
-              for {
-                config <- p.siteConf
-                page   <- loadPage
-              } yield {
-                $.modState(_.copy(conf = config, content = page))
-              }
+      $.props.map { p =>
+        Callback
+          .future[Unit] {
+            for {
+              config <- p.siteConf
+              page   <- loadPage
+            } yield {
+              $.modState(_.copy(conf = config, content = page))
             }
-            .runNow()
-      )
+          }
+          .runNow()
+      }
     }
 
     def loadPage: Future[Option[String]] =
       Ajax
         .get(url = "pages/about.html")
-        .map(
-          xhr =>
-            xhr.status match {
-              case ok: Int if ok == 200 => Some(xhr.responseText)
-              case _                    => None
+        .map { xhr =>
+          xhr.status match {
+            case ok: Int if ok == 200 => Some(xhr.responseText)
+            case _                    => None
           }
-        )
+        }
 
     def render(props: Props, state: State) = {
       <.div(

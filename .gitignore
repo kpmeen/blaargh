@@ -5,5 +5,7 @@ project/project/
 project/target/
 target/
 .idea
+.bloop
+.metals
 .DS_Store
 *.orig
