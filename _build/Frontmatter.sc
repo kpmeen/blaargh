@@ -1,5 +1,5 @@
 import $file.Common, Common._
-import $ivy.`org.yaml:snakeyaml:1.17`
+import $ivy.`org.yaml:snakeyaml:1.26`
 import org.yaml.snakeyaml.Yaml
 import scala.collection.JavaConverters._
 import scala.collection.Map
@@ -19,7 +19,6 @@ case class FrontMatter(
       val builder = Map.newBuilder[String, Any]
       builder += "title" -> title
       builder += "author" -> author
-      builder += "image" -> image.getOrElse("")
       date.foreach(d => builder += "date" -> d.toString)
       builder += "ingress" -> ingress.map(_.replaceAll("\n", " ")).getOrElse("")
       builder += "labels" -> labels.getOrElse(Seq.empty).asJava
@@ -72,7 +71,7 @@ object FrontMatter {
 
   def parse(header: String): FrontMatter = {
     val yaml = new Yaml
-    val res = yaml.load(header)
+    val res = yaml.load[java.util.Map[String, Any]](header)
     fromObject(res)
   }
 
@@ -90,21 +89,29 @@ object FrontMatter {
         d.toInstant.atZone(java.time.ZoneId.systemDefault()).toLocalDate
       },
       ingress = smap.get(FMIngress).map(_.asInstanceOf[String]),
-      labels = smap.get(FMLabels).map(_.asInstanceOf[java.util.ArrayList[String]].asScala),
+      labels = smap.get(FMLabels).map(_.asInstanceOf[java.util.ArrayList[String]].asScala.toSeq),
       image = smap.get(FMImage).map(_.asInstanceOf[String]),
       misc = nonDefaultKeys
     )
   }
 
   def toJsonString(fileName: String, fm: FrontMatter) = {
-    s"""{
-        |  "date": "${fm.date.map(_.toString).getOrElse("")}",
-        |  "author": "${fm.author}",
-        |  "title": "${fm.title}",
-        |  "ingress": "${fm.ingress.getOrElse("")}",
-        |  "labels": [${fm.labels.map(_.map(l => "\"" + l + "\"").mkString(",")).getOrElse("")}],
-        |  "filename": "${fileName.replaceAll(" ", "_")}",
-        |  "image": "${fm.image.map(i => "posts/" + i).getOrElse("")}"
-        |}""".stripMargin
+    try {
+      s"""{
+         |  "date": "${fm.date.map(_.toString).getOrElse("")}",
+         |  "author": "${fm.author}",
+         |  "title": "${fm.title}",
+         |  "ingress": "${fm.ingress.getOrElse("")}",
+         |  "labels": [${fm.labels.map(_.map(l => "\"" + l + "\"").mkString(",")).getOrElse("")}],
+         |  "filename": "${fileName.replaceAll(" ", "_")}",
+         |  "image": "${fm.image.map(i => "posts/" + i).getOrElse("")}"
+         |}""".stripMargin
+    } catch {
+      case e: Throwable =>
+        println("THIS FAILED!!!!")
+        e.printStackTrace()
+        throw e
+
+    }
   }
 }
